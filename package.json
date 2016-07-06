@@ -1,0 +1,24 @@
+{
+  "name": "gulpfile.d",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cloud-formation.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mijime/gulpfile.d.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mijime/gulpfile.d/issues"
+  },
+  "homepage": "https://github.com/mijime/gulpfile.d#readme",
+  "dependencies": {
+    "aws-sdk": "^2.4.5",
+    "through2": "^2.0.1"
+  }
+}
