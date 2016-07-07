@@ -1,5 +1,6 @@
 import {obj} from 'through2';
 import {CognitoIdentity} from 'aws-sdk';
+import {nodePromise} from './utils';
 
 const MaxResults = 10;
 
@@ -100,16 +101,4 @@ function findIdentityPools(identity) {
       return;
     });
   };
-}
-
-function nodePromise(target, func, ...args) {
-  return new Promise((resolve, reject) => {
-    return func.apply(target, args.concat([(err, res) => {
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve(res);
-    }]));
-  });
 }

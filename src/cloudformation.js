@@ -1,6 +1,7 @@
 import path from 'path';
 import {obj} from 'through2';
 import {CloudFormation} from 'aws-sdk';
+import {Promisify} from './utils';
 
 export default function deployCloudFormation(params) {
   const cf = new Promisify(new CloudFormation());
@@ -63,22 +64,3 @@ export default function deployCloudFormation(params) {
   });
 }
 
-class Promisify {
-  constructor(context) {
-    this.context = context;
-  }
-
-  node(func) {
-    return (...args) => {
-      return new Promise((resolve, reject) => {
-        return this.context[func].apply(this.context, args.concat([(err, res) => {
-          if (err) {
-            return reject(err);
-          }
-
-          return resolve(res);
-        }]));
-      });
-    };
-  }
-}
