@@ -1,5 +1,5 @@
 {
-  "name": "gulpfile.d",
+  "name": "gulp-aws",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mijime/gulpfile.d.git"
+    "url": "git+https://github.com/mijime/gulp-aws.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mijime/gulpfile.d/issues"
+    "url": "https://github.com/mijime/gulp-aws/issues"
   },
-  "homepage": "https://github.com/mijime/gulpfile.d#readme",
+  "homepage": "https://github.com/mijime/gulp-aws#readme",
   "dependencies": {
     "aws-sdk": "^2.4.5",
     "through2": "^2.0.1"
