@@ -14,7 +14,6 @@ export default function jsonMerge() {
     list.push(data);
     tmpfile = file;
     return done();
-
   }, function flush(done) {
     if (!tmpfile) {
       return done();

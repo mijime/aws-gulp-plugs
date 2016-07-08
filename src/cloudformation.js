@@ -25,7 +25,6 @@ export default function deployCloudFormation(params) {
       }).then(() => {
         return cf.node('waitFor')('stackCreateComplete', {StackName});
       });
-
     }).then(() => {
       return cf.node('updateStack')({
         StackName,
@@ -33,7 +32,6 @@ export default function deployCloudFormation(params) {
         ...params
       }).then(() => {
         return cf.node('waitFor')('stackUpdateComplete', {StackName});
-
       }).catch(err => {
         if (err.message === 'No updates are to be performed.') {
           return;
@@ -43,7 +41,6 @@ export default function deployCloudFormation(params) {
       });
     }).then(() => {
       return cf.node('describeStacks')({StackName});
-
     }).then(({Stacks}) => {
       return Stacks.map(({Outputs}) => {
         return Outputs.reduce((acc, {OutputKey, OutputValue}) => {
@@ -51,12 +48,10 @@ export default function deployCloudFormation(params) {
           return acc;
         }, {});
       }).reduce((_, latest) => latest);
-
     }).then(output => {
       file.contents = new Buffer(JSON.stringify(output, null, '  '));
       this.push(file);
       return done();
-
     }).catch(err => {
       console.log(err);
       return done(err);

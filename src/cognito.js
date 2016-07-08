@@ -24,13 +24,11 @@ export default function identityPool(params) {
       return findIdentityPools(identity)(resolve, reject, {
         IdentityPoolName
       });
-
     }).catch(() => {
       return nodePromise(identity, identity.createIdentityPool, {
         IdentityPoolName,
         AllowUnauthenticatedIdentities
       });
-
     }).then(({IdentityPoolId}) => {
       return nodePromise(identity, identity.setIdentityPoolRoles, {
         IdentityPoolId,
@@ -80,7 +78,6 @@ function findIdentityPools(identity) {
         }
 
         return null;
-
       }, null);
 
       if (matchedPool) {
