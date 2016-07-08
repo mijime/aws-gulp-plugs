@@ -3,6 +3,8 @@ import {obj} from 'through2';
 import {Lambda} from 'aws-sdk';
 import {ZipFile} from 'yazl';
 import concat from 'concat-stream';
+import tap from 'gulp-tap';
+import browserify from 'browserify';
 
 export default function updateFunctionCode(...args) {
   const lambda = new Lambda(...args);
@@ -63,5 +65,19 @@ export function createLambdaZip() {
         done();
       }));
     });
+  });
+}
+
+export function tapBrowserifyForNode(bundle = b => b) {
+  return tap(file => {
+    const bundler = browserify(file.path, {
+      detectGlobals: false,
+      builtins: false,
+      commondir: false,
+      browserField: false,
+      standalone: 'code'
+    });
+
+    file.contents = bundle(bundler).bundle();
   });
 }
