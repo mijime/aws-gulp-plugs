@@ -10,8 +10,7 @@ export default function updateFunctionCode(...args) {
 
   return obj(function transform(file, _, done) {
     if (file.isNull()) {
-      done();
-      return;
+      return done();
     }
 
     const FunctionName = path.basename(file.path, '.js');
@@ -25,8 +24,7 @@ export default function updateFunctionCode(...args) {
       }
 
       this.push(file);
-      done();
-      return;
+      return done();
     });
   });
 }
@@ -34,8 +32,7 @@ export default function updateFunctionCode(...args) {
 export function createLambdaZip() {
   return obj(function transform(file, _, done) {
     if (file.isNull()) {
-      done();
-      return;
+      return done();
     }
 
     const zip = new ZipFile();
@@ -61,7 +58,7 @@ export function createLambdaZip() {
         file.path = filepath;
         file.contents = data;
         this.push(file);
-        done();
+        return done();
       }));
     });
   });
@@ -70,8 +67,7 @@ export function createLambdaZip() {
 export function tapBrowserifyForNode(bundle = b => b) {
   return obj(function transform(file, enc, done) {
     if (file.isNull()) {
-      done();
-      return;
+      return done();
     }
 
     const bundler = browserify(file.path, {
@@ -84,5 +80,6 @@ export function tapBrowserifyForNode(bundle = b => b) {
 
     file.contents = bundle(bundler).bundle();
     this.push(file);
+    return done();
   });
 }
