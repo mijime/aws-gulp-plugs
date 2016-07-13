@@ -16,8 +16,6 @@ export default function deployCloudFormation(params) {
     const TemplateBody = file.contents.toString(enc);
 
     return cf.node('describeStacks')({StackName}).catch(err => {
-      console.log(err);
-
       return cf.node('createStack')({
         StackName,
         TemplateBody,
