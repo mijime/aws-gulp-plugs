@@ -3,7 +3,6 @@ import {obj} from 'through2';
 import {Lambda} from 'aws-sdk';
 import {ZipFile} from 'yazl';
 import concat from 'concat-stream';
-import tap from 'gulp-tap';
 import browserify from 'browserify';
 
 export default function updateFunctionCode(...args) {
@@ -69,7 +68,12 @@ export function createLambdaZip() {
 }
 
 export function tapBrowserifyForNode(bundle = b => b) {
-  return tap(file => {
+  return obj(function transform(file, enc, done) {
+    if (file.isNull()) {
+      done();
+      return;
+    }
+
     const bundler = browserify(file.path, {
       detectGlobals: false,
       builtins: false,
@@ -79,5 +83,6 @@ export function tapBrowserifyForNode(bundle = b => b) {
     });
 
     file.contents = bundle(bundler).bundle();
+    this.push(file);
   });
 }
