@@ -59,3 +59,20 @@ export default function deployCloudFormation(params) {
   });
 }
 
+export function convertParameters() {
+  return obj(function transform(file, enc, done) {
+    if (file.isNull()) {
+      this.push(file);
+      return done();
+    }
+
+    const contents = JSON.parse(file.contents.toString(enc));
+    file.contents = new Buffer(JSON.stringify(Object.keys(contents)
+          .reduce((acc, key) => {
+            acc.Parameters[key] = {Type: 'String', Default: contents[key]};
+            return acc;
+          }, {Parameters: {}})));
+    this.push(file);
+    return done();
+  });
+}
