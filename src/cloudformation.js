@@ -6,7 +6,7 @@ import {Promisify} from './utils';
 export default function deployCloudFormation(params) {
   const cf = new Promisify(new CloudFormation());
 
-  return obj(function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
@@ -47,30 +47,34 @@ export default function deployCloudFormation(params) {
         }, {});
       }).reduce((_, latest) => latest);
     }).then(output => {
-      file.contents = new Buffer(JSON.stringify(output, null, '  '));
+      file.contents = Buffer.from(JSON.stringify(output, null, '  '));
       this.push(file);
       return done();
     }).catch(err => {
       console.log(err);
       return done(err);
     });
-  });
+  }
+
+  return obj(transform);
 }
 
 export function convertParameters() {
-  return obj(function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
     }
 
     const contents = JSON.parse(file.contents.toString(enc));
-    file.contents = new Buffer(JSON.stringify(Object.keys(contents)
-          .reduce((acc, key) => {
-            acc.Parameters[key] = {Type: 'String', Default: contents[key]};
-            return acc;
-          }, {Parameters: {}})));
+    file.contents = Buffer.from(JSON.stringify(Object.keys(contents)
+      .reduce((acc, key) => {
+        acc.Parameters[key] = {Type: 'String', Default: contents[key]};
+        return acc;
+      }, {Parameters: {}})));
     this.push(file);
     return done();
-  });
+  }
+
+  return obj(transform);
 }

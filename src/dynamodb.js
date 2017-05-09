@@ -5,7 +5,7 @@ import {DynamoDB} from 'aws-sdk';
 export default function batchWriteItem(...args) {
   const dynamodb = new DynamoDB(...args);
 
-  return obj(function transform(file, enc, done) {
+  return obj((file, enc, done) => {
     const TableName = path.basename(file.path, '.json');
     const records = JSON.parse(file.contents.toString(enc));
     const putRequests = records.map(record => {
