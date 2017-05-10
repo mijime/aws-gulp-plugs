@@ -8,7 +8,7 @@ import browserify from 'browserify';
 export default function updateFunctionCode(...args) {
   const lambda = new Lambda(...args);
 
-  return obj(function transform(file, _, done) {
+  function transform(file, _, done) {
     if (file.isNull()) {
       return done();
     }
@@ -26,11 +26,13 @@ export default function updateFunctionCode(...args) {
       this.push(file);
       return done();
     });
-  });
+  }
+
+  return obj(transform);
 }
 
 export function createLambdaZip() {
-  return obj(function transform(file, _, done) {
+  function transform(file, _, done) {
     if (file.isNull()) {
       return done();
     }
@@ -61,11 +63,13 @@ export function createLambdaZip() {
         return done();
       }));
     });
-  });
+  }
+
+  return obj(transform);
 }
 
 export function tapBrowserifyForNode(bundle = b => b) {
-  return obj(function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       return done();
     }
@@ -81,5 +85,7 @@ export function tapBrowserifyForNode(bundle = b => b) {
     file.contents = bundle(bundler).bundle();
     this.push(file);
     return done();
-  });
+  }
+
+  return obj(transform);
 }

@@ -7,7 +7,7 @@ const MaxResults = 10;
 export default function identityPool(params) {
   const identity = new CognitoIdentity(params);
 
-  return obj(function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
@@ -40,14 +40,16 @@ export default function identityPool(params) {
         return {IdentityPoolId};
       });
     }).then(res => {
-      file.contents = new Buffer(JSON.stringify(res, null, '  '));
+      file.contents = Buffer.from(JSON.stringify(res, null, '  '));
       this.push(file);
       return done();
     }).catch(err => {
       console.log(err);
       return done();
     });
-  });
+  }
+
+  return obj(transform);
 }
 
 function findIdentityPools(identity) {
@@ -95,7 +97,6 @@ function findIdentityPools(identity) {
         MaxResults,
         currentToken: NextToken
       });
-      return;
     });
   };
 }

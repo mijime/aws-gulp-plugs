@@ -4,7 +4,7 @@ export default function jsonMerge() {
   const list = [];
   let tmpfile = null;
 
-  return obj(function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
@@ -14,16 +14,20 @@ export default function jsonMerge() {
     list.push(data);
     tmpfile = file;
     return done();
-  }, function flush(done) {
+  }
+
+  function flush(done) {
     if (!tmpfile) {
       return done();
     }
 
     const extendData = list.reduce(extend, {});
-    tmpfile.contents = new Buffer(JSON.stringify(extendData, null, '  '));
+    tmpfile.contents = Buffer.from(JSON.stringify(extendData, null, '  '));
     this.push(tmpfile);
     return done();
-  });
+  }
+
+  return obj(transform, flush);
 }
 
 function extend(acc, node) {
@@ -31,7 +35,7 @@ function extend(acc, node) {
     return acc;
   }
 
-  if ((acc instanceof Array) && (node instanceof Array)) {
+  if ((Array.isArray(acc)) && (Array.isArray(node))) {
     return acc.concat(node);
   }
 
