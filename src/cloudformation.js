@@ -1,12 +1,70 @@
 import path from 'path';
 import {obj} from 'through2';
 import {CloudFormation} from 'aws-sdk';
-import {Promisify} from './utils';
 
-export default function deployCloudFormation(params) {
-  const cf = new Promisify(new CloudFormation());
+const cf = new CloudFormation();
 
-  function transform(file, enc, done) {
+async function deployCloudFormation(params) {
+  const {StackName} = params;
+
+  try {
+    await cf.describeStacks({
+      StackName
+    }).promise();
+
+    await cf.updateStack(params).promise();
+  } catch (err) {
+    await cf.createStack(params).promise();
+  }
+
+  await cf.waitFor('stackCreateComplete', {
+    StackName
+  }).promise();
+
+  const {Stacks} = await cf.describeStacks({
+    StackName
+  }).promise();
+
+  return Stacks.map(({Outputs}) => {
+    return Outputs.reduce((acc, {OutputKey, OutputValue}) => {
+      acc[OutputKey] = OutputValue;
+      return acc;
+    }, {});
+  }).reduce((_, latest) => latest);
+}
+
+export function deployFromParameters(params) {
+  async function transform(file, enc, done) {
+    if (file.isNull()) {
+      this.push(file);
+      done();
+      return;
+    }
+
+    const Parameters = JSON.parse(
+      file.contents.toString(enc));
+
+    try {
+      const contents = await deployCloudFormation({
+        Parameters,
+        ...params
+      });
+
+      file.contents = Buffer.from(JSON.stringify(
+        contents, null, '  '));
+      this.push(file);
+      done();
+      return;
+    } catch (err) {
+      done(err);
+    }
+  }
+
+  return obj(transform);
+}
+
+export default function deployFromTemplates(params) {
+  async function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
@@ -15,45 +73,21 @@ export default function deployCloudFormation(params) {
     const StackName = path.basename(file.path, '.json');
     const TemplateBody = file.contents.toString(enc);
 
-    return cf.node('describeStacks')({StackName}).catch(() => {
-      return cf.node('createStack')({
+    try {
+      const contents = await deployCloudFormation({
         StackName,
         TemplateBody,
         ...params
-      }).then(() => {
-        return cf.node('waitFor')('stackCreateComplete', {StackName});
       });
-    }).then(() => {
-      return cf.node('updateStack')({
-        StackName,
-        TemplateBody,
-        ...params
-      }).then(() => {
-        return cf.node('waitFor')('stackUpdateComplete', {StackName});
-      }).catch(err => {
-        if (err.message === 'No updates are to be performed.') {
-          return;
-        }
 
-        throw err;
-      });
-    }).then(() => {
-      return cf.node('describeStacks')({StackName});
-    }).then(({Stacks}) => {
-      return Stacks.map(({Outputs}) => {
-        return Outputs.reduce((acc, {OutputKey, OutputValue}) => {
-          acc[OutputKey] = OutputValue;
-          return acc;
-        }, {});
-      }).reduce((_, latest) => latest);
-    }).then(output => {
-      file.contents = Buffer.from(JSON.stringify(output, null, '  '));
+      file.contents = Buffer.from(JSON.stringify(
+        contents, null, '  '));
       this.push(file);
-      return done();
-    }).catch(err => {
-      console.log(err);
-      return done(err);
-    });
+      done();
+      return;
+    } catch (err) {
+      done(err);
+    }
   }
 
   return obj(transform);
