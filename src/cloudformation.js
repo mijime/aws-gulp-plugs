@@ -41,8 +41,13 @@ export function deployFromParameters(params) {
       return;
     }
 
-    const Parameters = JSON.parse(
+    const ParameterObjects = JSON.parse(
       file.contents.toString(enc));
+    const Parameters = ParameterObjects.keys()
+      .map(ParameterKey => ({
+        ParameterKey,
+        ParameterValue: ParameterObjects[ParameterKey]
+      }));
 
     try {
       const contents = await deployCloudFormation({
@@ -63,7 +68,7 @@ export function deployFromParameters(params) {
   return obj(transform);
 }
 
-export default function deployFromTemplates(params) {
+export function deployFromTemplates(params) {
   async function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
@@ -112,3 +117,5 @@ export function convertParameters() {
 
   return obj(transform);
 }
+
+export default deployFromTemplates;
