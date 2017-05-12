@@ -11,7 +11,10 @@ function deployCloudFormation(params) {
   return cf.describeStacks({
     StackName
   }).promise()
-    .catch(() => cf.createStack(params).promise())
+    .catch(() => cf.createStack(params).promise()
+      .then(() => cf.waitFor('stackCreateComplete', {
+        StackName
+      }).promise()))
     .then(() => cf.updateStack(params).promise().catch(err => {
       if (err.code === 'ValidationError') {
         util.log(err.message);
@@ -19,7 +22,9 @@ function deployCloudFormation(params) {
       }
 
       throw err;
-    }))
+    }).then(() => cf.waitFor('stackUpdateComplete', {
+      StackName
+    }).promise()))
     .then(() => cf.describeStacks({
       StackName
     }).promise())
