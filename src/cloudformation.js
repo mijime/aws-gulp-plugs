@@ -1,40 +1,38 @@
 import path from 'path';
 import {obj} from 'through2';
 import {CloudFormation} from 'aws-sdk';
+import util from 'gulp-util';
 
 const cf = new CloudFormation();
 
-async function deployCloudFormation(params) {
+function deployCloudFormation(params) {
   const {StackName} = params;
 
-  try {
-    await cf.describeStacks({
+  return cf.describeStacks({
+    StackName
+  }).promise()
+    .catch(() => cf.createStack(params).promise())
+    .then(() => cf.updateStack(params).promise().catch(err => {
+      if (err.code === 'ValidationError') {
+        util.log(err.message);
+        return;
+      }
+
+      throw err;
+    }))
+    .then(() => cf.describeStacks({
       StackName
-    }).promise();
-
-    await cf.updateStack(params).promise();
-  } catch (err) {
-    await cf.createStack(params).promise();
-  }
-
-  await cf.waitFor('stackCreateComplete', {
-    StackName
-  }).promise();
-
-  const {Stacks} = await cf.describeStacks({
-    StackName
-  }).promise();
-
-  return Stacks.map(({Outputs}) => {
-    return Outputs.reduce((acc, {OutputKey, OutputValue}) => {
-      acc[OutputKey] = OutputValue;
-      return acc;
-    }, {});
-  }).reduce((_, latest) => latest);
+    }).promise())
+    .then(({Stacks}) => Stacks.map(({Outputs}) => {
+      return Outputs.reduce((acc, {OutputKey, OutputValue}) => {
+        acc[OutputKey] = OutputValue;
+        return acc;
+      }, {});
+    }).reduce((_, latest) => latest));
 }
 
 export function deployFromParameters(params) {
-  async function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       done();
@@ -43,33 +41,29 @@ export function deployFromParameters(params) {
 
     const ParameterObjects = JSON.parse(
       file.contents.toString(enc));
-    const Parameters = ParameterObjects.keys()
+
+    const Parameters = Object.keys(ParameterObjects)
       .map(ParameterKey => ({
         ParameterKey,
         ParameterValue: ParameterObjects[ParameterKey]
       }));
 
-    try {
-      const contents = await deployCloudFormation({
-        Parameters,
-        ...params
-      });
-
+    deployCloudFormation({
+      Parameters,
+      ...params
+    }).then(contents => {
       file.contents = Buffer.from(JSON.stringify(
         contents, null, '  '));
       this.push(file);
-      done();
-      return;
-    } catch (err) {
-      done(err);
-    }
+      return done();
+    }).catch(err => done(err));
   }
 
   return obj(transform);
 }
 
 export function deployFromTemplates(params) {
-  async function transform(file, enc, done) {
+  function transform(file, enc, done) {
     if (file.isNull()) {
       this.push(file);
       return done();
@@ -78,21 +72,16 @@ export function deployFromTemplates(params) {
     const StackName = path.basename(file.path, '.json');
     const TemplateBody = file.contents.toString(enc);
 
-    try {
-      const contents = await deployCloudFormation({
-        StackName,
-        TemplateBody,
-        ...params
-      });
-
+    deployCloudFormation({
+      StackName,
+      TemplateBody,
+      ...params
+    }).then(contents => {
       file.contents = Buffer.from(JSON.stringify(
         contents, null, '  '));
       this.push(file);
-      done();
-      return;
-    } catch (err) {
-      done(err);
-    }
+      return done();
+    }).catch(err => done(err));
   }
 
   return obj(transform);
